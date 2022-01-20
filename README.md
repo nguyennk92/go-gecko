@@ -31,11 +31,21 @@ gopher resources from [free-gophers-pack](https://github.com/MariaLetta/free-gop
 
 ## Usage
 
-Installation with go get.
+Installation:
+
+Add the following line to your project `go.mod` file.
 
 ```
-go get -u github.com/superoo7/go-gecko
+replace github.com/superoo7/go-gecko => github.com/haupc/go-gecko latest
 ```
+
+and run 
+
+```
+go mod tidy
+```
+
+to evaluate `latest` to a concrete tag.
 
 For usage, checkout [Example folder for v3](/_example/v3)
 

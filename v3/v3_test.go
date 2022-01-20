@@ -12,7 +12,7 @@ func init() {
 	defer gock.Off()
 }
 
-var c = NewClient(nil)
+var c = NewClient(nil, nil)
 var mockURL = "https://api.coingecko.com/api/v3"
 
 func TestPing(t *testing.T) {
@@ -75,7 +75,7 @@ func TestSimpleSupportedVSCurrencies(t *testing.T) {
 
 func TestCoinsList(t *testing.T) {
 	err := setupGock("json/coins_list.json", "/coins/list")
-	list, err := c.CoinsList()
+	list, err := c.CoinsList(false)
 	if err != nil {
 		t.FailNow()
 	}

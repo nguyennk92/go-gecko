@@ -65,7 +65,12 @@ func main() {
 	httpClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
-	CG := coingecko.NewClient(httpClient)
+	CG := coingecko.NewClient(httpClient, nil)
+	c, err := CG.CoinsList(false)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(c)
 }
 ```
 

@@ -185,11 +185,11 @@ func (c *Client) CoinsMarket(vsCurrency string, ids []string, order string, perP
 		params.Add("ids", idsParam)
 	}
 	// per_page
-	if perPage <= 0 || perPage > 250 {
-		perPage = 100
+	if perPage > 0 && perPage <= 250 {
+		params.Add("per_page", format.Int2String(perPage))
+		params.Add("page", format.Int2String(page))
 	}
-	params.Add("per_page", format.Int2String(perPage))
-	params.Add("page", format.Int2String(page))
+
 	// sparkline
 	params.Add("sparkline", format.Bool2String(sparkline))
 	// price_change_percentage

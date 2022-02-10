@@ -198,24 +198,7 @@ type StatusUpdateItem struct {
 // CoinsListItem item in CoinList
 type CoinsListItem struct {
 	coinBaseStruct
-	Platforms struct {
-		Ethereum          string `json:"ethereum"`
-		BinanceSmartChain string `json:"binance-smart-chain"`
-		PolygonPos        string `json:"polygon-pos"`
-		Fantom            string `json:"fantom"`
-		Xdai              string `json:"xdai"`
-		Kardiachain       string `json:"kardiachain"`
-		Avalanche         string `json:"avalanche"`
-		HarmonyShard0     string `json:"harmony-shard-0"`
-		Solana            string `json:"solana"`
-		Moonriver         string `json:"moonriver"`
-		Tron              string `json:"tron"`
-		HuobiToken        string `json:"huobi-token"`
-		Sora              string `json:"sora"`
-		Polkadot          string `json:"polkadot"`
-		Chiliz            string `json:"chiliz"`
-		// ... alot other platform
-	}
+	Platforms map[string]string `json:"platforms"`
 }
 
 // CoinsMarketItem item in CoinMarket

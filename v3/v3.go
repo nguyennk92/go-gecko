@@ -1,6 +1,7 @@
 package coingecko
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -18,18 +19,18 @@ var proURL = "https://pro-api.coingecko.com/api/v3"
 // Client struct
 type Client struct {
 	httpClient *http.Client
-	apiKey     *string
+	apiKey     string
 	url        string
 }
 
 // NewClient create new client object
-func NewClient(httpClient *http.Client, apiKey *string) *Client {
+func NewClient(httpClient *http.Client, apiKey string) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
 
 	url := baseURL
-	if apiKey != nil {
+	if apiKey != "" {
 		url = proURL
 	}
 
@@ -55,16 +56,16 @@ func doReq(req *http.Request, client *http.Client) ([]byte, error) {
 }
 
 // MakeReq HTTP request helper
-func (c *Client) MakeReq(url string) ([]byte, error) {
-	req, err := http.NewRequest("GET", url, nil)
+func (c *Client) MakeReq(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if c.apiKey != nil {
+	if c.apiKey != "" {
 		req.Header = http.Header{
-			"X-Cg-Pro-Api-Key": []string{*c.apiKey},
+			"X-Cg-Pro-Api-Key": []string{c.apiKey},
 		}
 	}
 
@@ -78,9 +79,9 @@ func (c *Client) MakeReq(url string) ([]byte, error) {
 // API
 
 // Ping /ping endpoint
-func (c *Client) Ping() (*types.Ping, error) {
+func (c *Client) Ping(ctx context.Context) (*types.Ping, error) {
 	url := fmt.Sprintf("%s/ping", c.url)
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -93,11 +94,11 @@ func (c *Client) Ping() (*types.Ping, error) {
 }
 
 // SimpleSinglePrice /simple/price  Single ID and Currency (ids, vs_currency)
-func (c *Client) SimpleSinglePrice(id string, vsCurrency string) (*types.SimpleSinglePrice, error) {
+func (c *Client) SimpleSinglePrice(ctx context.Context, id string, vsCurrency string) (*types.SimpleSinglePrice, error) {
 	idParam := []string{strings.ToLower(id)}
 	vcParam := []string{strings.ToLower(vsCurrency)}
 
-	t, err := c.SimplePrice(idParam, vcParam)
+	t, err := c.SimplePrice(ctx, idParam, vcParam)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func (c *Client) SimpleSinglePrice(id string, vsCurrency string) (*types.SimpleS
 }
 
 // SimplePrice /simple/price Multiple ID and Currency (ids, vs_currencies)
-func (c *Client) SimplePrice(ids []string, vsCurrencies []string) (*map[string]map[string]float32, error) {
+func (c *Client) SimplePrice(ctx context.Context, ids []string, vsCurrencies []string) (*map[string]map[string]float32, error) {
 	params := url.Values{}
 	idsParam := strings.Join(ids[:], ",")
 	vsCurrenciesParam := strings.Join(vsCurrencies[:], ",")
@@ -119,7 +120,7 @@ func (c *Client) SimplePrice(ids []string, vsCurrencies []string) (*map[string]m
 	params.Add("vs_currencies", vsCurrenciesParam)
 
 	url := fmt.Sprintf("%s/simple/price?%s", c.url, params.Encode())
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -134,9 +135,9 @@ func (c *Client) SimplePrice(ids []string, vsCurrencies []string) (*map[string]m
 }
 
 // SimpleSupportedVSCurrencies /simple/supported_vs_currencies
-func (c *Client) SimpleSupportedVSCurrencies() (*types.SimpleSupportedVSCurrencies, error) {
+func (c *Client) SimpleSupportedVSCurrencies(ctx context.Context) (*types.SimpleSupportedVSCurrencies, error) {
 	url := fmt.Sprintf("%s/simple/supported_vs_currencies", c.url)
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -149,11 +150,11 @@ func (c *Client) SimpleSupportedVSCurrencies() (*types.SimpleSupportedVSCurrenci
 }
 
 // CoinsList /coins/list
-func (c *Client) CoinsList(includePlatform bool) (*types.CoinList, error) {
+func (c *Client) CoinsList(ctx context.Context, includePlatform bool) (*types.CoinList, error) {
 	params := url.Values{}
 	params.Set("include_platform", fmt.Sprintf("%v", includePlatform))
 	url := fmt.Sprintf("%s/coins/list?%s", c.url, params.Encode())
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +168,7 @@ func (c *Client) CoinsList(includePlatform bool) (*types.CoinList, error) {
 }
 
 // CoinsMarket /coins/market
-func (c *Client) CoinsMarket(vsCurrency string, ids []string, order string, perPage int, page int, sparkline bool, priceChangePercentage []string) (*types.CoinsMarket, error) {
+func (c *Client) CoinsMarket(ctx context.Context, vsCurrency string, ids []string, order string, perPage int, page int, sparkline bool, priceChangePercentage []string) (*types.CoinsMarket, error) {
 	if len(vsCurrency) == 0 {
 		return nil, fmt.Errorf("vs_currency is required")
 	}
@@ -198,7 +199,7 @@ func (c *Client) CoinsMarket(vsCurrency string, ids []string, order string, perP
 		params.Add("price_change_percentage", priceChangePercentageParam)
 	}
 	url := fmt.Sprintf("%s/coins/markets?%s", c.url, params.Encode())
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +212,7 @@ func (c *Client) CoinsMarket(vsCurrency string, ids []string, order string, perP
 }
 
 // CoinsID /coins/{id}
-func (c *Client) CoinsID(id string, localization bool, tickers bool, marketData bool, communityData bool, developerData bool, sparkline bool) (*types.CoinsID, error) {
+func (c *Client) CoinsID(ctx context.Context, id string, localization bool, tickers bool, marketData bool, communityData bool, developerData bool, sparkline bool) (*types.CoinsID, error) {
 
 	if len(id) == 0 {
 		return nil, fmt.Errorf("id is required")
@@ -224,7 +225,7 @@ func (c *Client) CoinsID(id string, localization bool, tickers bool, marketData 
 	params.Add("developer_data", format.Bool2String(developerData))
 	params.Add("sparkline", format.Bool2String(sparkline))
 	url := fmt.Sprintf("%s/coins/%s?%s", c.url, id, params.Encode())
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +239,7 @@ func (c *Client) CoinsID(id string, localization bool, tickers bool, marketData 
 }
 
 // CoinsIDTickers /coins/{id}/tickers
-func (c *Client) CoinsIDTickers(id string, page int) (*types.CoinsIDTickers, error) {
+func (c *Client) CoinsIDTickers(ctx context.Context, id string, page int) (*types.CoinsIDTickers, error) {
 	if len(id) == 0 {
 		return nil, fmt.Errorf("id is required")
 	}
@@ -247,7 +248,7 @@ func (c *Client) CoinsIDTickers(id string, page int) (*types.CoinsIDTickers, err
 		params.Add("page", format.Int2String(page))
 	}
 	url := fmt.Sprintf("%s/coins/%s/tickers?%s", c.url, id, params.Encode())
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +261,7 @@ func (c *Client) CoinsIDTickers(id string, page int) (*types.CoinsIDTickers, err
 }
 
 // CoinsIDHistory /coins/{id}/history?date={date}&localization=false
-func (c *Client) CoinsIDHistory(id string, date string, localization bool) (*types.CoinsIDHistory, error) {
+func (c *Client) CoinsIDHistory(ctx context.Context, id string, date string, localization bool) (*types.CoinsIDHistory, error) {
 	if len(id) == 0 || len(date) == 0 {
 		return nil, fmt.Errorf("id and date is required")
 	}
@@ -269,7 +270,7 @@ func (c *Client) CoinsIDHistory(id string, date string, localization bool) (*typ
 	params.Add("localization", format.Bool2String(localization))
 
 	url := fmt.Sprintf("%s/coins/%s/history?%s", c.url, id, params.Encode())
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +283,7 @@ func (c *Client) CoinsIDHistory(id string, date string, localization bool) (*typ
 }
 
 // CoinsIDMarketChart /coins/{id}/market_chart?vs_currency={usd, eur, jpy, etc.}&days={1,14,30,max}
-func (c *Client) CoinsIDMarketChart(id string, vs_currency string, days string) (*types.CoinsIDMarketChart, error) {
+func (c *Client) CoinsIDMarketChart(ctx context.Context, id string, vs_currency string, days string) (*types.CoinsIDMarketChart, error) {
 	if len(id) == 0 || len(vs_currency) == 0 || len(days) == 0 {
 		return nil, fmt.Errorf("id, vs_currency, and days is required")
 	}
@@ -292,7 +293,7 @@ func (c *Client) CoinsIDMarketChart(id string, vs_currency string, days string) 
 	params.Add("days", days)
 
 	url := fmt.Sprintf("%s/coins/%s/market_chart?%s", c.url, id, params.Encode())
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -318,9 +319,9 @@ func (c *Client) CoinsIDMarketChart(id string, vs_currency string, days string) 
 // }
 
 // EventsCountries https://api.coingecko.com/api/v3/events/countries
-func (c *Client) EventsCountries() ([]types.EventCountryItem, error) {
+func (c *Client) EventsCountries(ctx context.Context) ([]types.EventCountryItem, error) {
 	url := fmt.Sprintf("%s/events/countries", c.url)
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -334,9 +335,9 @@ func (c *Client) EventsCountries() ([]types.EventCountryItem, error) {
 }
 
 // EventsTypes https://api.coingecko.com/api/v3/events/types
-func (c *Client) EventsTypes() (*types.EventsTypes, error) {
+func (c *Client) EventsTypes(ctx context.Context) (*types.EventsTypes, error) {
 	url := fmt.Sprintf("%s/events/types", c.url)
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -350,9 +351,9 @@ func (c *Client) EventsTypes() (*types.EventsTypes, error) {
 }
 
 // ExchangeRates https://api.coingecko.com/api/v3/exchange_rates
-func (c *Client) ExchangeRates() (*types.ExchangeRatesItem, error) {
+func (c *Client) ExchangeRates(ctx context.Context) (*types.ExchangeRatesItem, error) {
 	url := fmt.Sprintf("%s/exchange_rates", c.url)
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -365,9 +366,9 @@ func (c *Client) ExchangeRates() (*types.ExchangeRatesItem, error) {
 }
 
 // Global https://api.coingecko.com/api/v3/global
-func (c *Client) Global() (*types.Global, error) {
+func (c *Client) Global(ctx context.Context) (*types.Global, error) {
 	url := fmt.Sprintf("%s/global", c.url)
-	resp, err := c.MakeReq(url)
+	resp, err := c.MakeReq(ctx, url)
 	if err != nil {
 		return nil, err
 	}
